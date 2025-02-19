@@ -14,7 +14,7 @@ interface Debris {
 const CesiumGlobe: React.FC = () => {
     const viewerRef = useRef<Viewer | null>(null);
     const initialFilters = {
-        LEO: true,
+        LEO: false,
         MEO: true,
         HEO: true,
         GEO: true,
@@ -24,6 +24,19 @@ const CesiumGlobe: React.FC = () => {
         LMO: true,
         MGO: true,
         Other: true,
+    };
+    const descriptionOrbitial: { [key: string]: string } = {
+
+        LEO: "Low Earth Orbit",
+        MEO: "Medium Earth Orbit",
+        HEO: "Highly Eccentric Earth Orbit",
+        GEO: "Geostationary Orbit",
+        EGO: "Extended Geostationary Orbit",
+        GTO: "GEO Transfer Orbit",
+        NSO: "Navigation Satellites Orbit",
+        LMO: "LEO-MEO Crossing Orbits",
+        MGO: "MEO-GEO Crossing Orbits",
+        Other: "Undefined Orbit",
     };
     
     const [debris, setDebris] = useState<Debris[]>([]);
@@ -81,6 +94,7 @@ const CesiumGlobe: React.FC = () => {
                          <div style="background-color: black; color: white; padding: 10px; border-radius: 5px;">
                             <h3>${obj.name}</h3>
                             <b>Type:</b> ${obj.type}<br>
+                            <b>Type desc:</b>${descriptionOrbitial[obj.orbitRegime]}<br>
                             <b>Orbit:</b> ${obj.orbitRegime}<br>
                             <b>Altitude:</b> ${obj.altitude.toLocaleString()} km<br>
                             <b>Longitude:</b> ${obj.longitude.toFixed(2)}<br>
@@ -156,7 +170,7 @@ const CesiumGlobe: React.FC = () => {
                         marginRight: '5px',
                         borderRadius: '2px'
                     };
-
+                    const tooltip = descriptionOrbitial[orbit] || "No description available";
                     return (
                         <label key={orbit} style={{ display: 'flex', alignItems: 'center', fontSize: '20px', marginBottom: '5px' }}>
                             <div style={colorStyle}></div>
@@ -166,6 +180,7 @@ const CesiumGlobe: React.FC = () => {
                                 checked={filter[orbit]}
                                 onChange={handleFilterChange}
                                 style={{ marginRight: '5px' }}
+                                title={tooltip} 
                             />
                             {orbit}
                         </label>
