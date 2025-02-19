@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Viewer, Cartesian3, Color, Entity } from 'cesium';
 import { getDebrisObjects } from './services/api';
 
-// Define the type for debris
 interface Debris {
     name: string;
     type: string;
@@ -14,7 +13,21 @@ interface Debris {
 
 const CesiumGlobe: React.FC = () => {
     const viewerRef = useRef<Viewer | null>(null);
+    const initialFilters = {
+        LEO: true,
+        MEO: true,
+        HEO: true,
+        GEO: true,
+        EGO: true,
+        GTO: true,
+        NSO: true,
+        LMO: true,
+        MGO: true,
+        Other: true,
+    };
+    
     const [debris, setDebris] = useState<Debris[]>([]);
+    const [filter, setFilter] = useState<{ [key: string]: boolean }>(initialFilters);
 
     useEffect(() => {
         const fetchDebris = async () => {
@@ -38,7 +51,6 @@ const CesiumGlobe: React.FC = () => {
 
         const viewer = viewerRef.current;
 
-        // Define a color map for each OrbitRegime
         const orbitRegimeColors: { [key: string]: Color } = {
             LEO: Color.RED,
             MEO: Color.GREEN,
@@ -52,31 +64,119 @@ const CesiumGlobe: React.FC = () => {
             Other: Color.GREY
         };
 
-        // Remove previous entities
         viewer.entities.removeAll();
 
-        // Add debris entities to the viewer
         debris.forEach((obj) => {
-            const color = orbitRegimeColors[obj.orbitRegime] || Color.WHITE;
-            viewer.entities.add(
-                new Entity({
-                    position: Cartesian3.fromDegrees(obj.longitude, obj.latitude, obj.altitude),
-                    point: {
-                        pixelSize: 5,
-                        color: color,
-                    },
-                    name: obj.name,
-                    description: `Type: ${obj.type}<br>Orbit: ${obj.orbitRegime}`,
-                })
-            );
+            if (filter[obj.orbitRegime]) {
+                const color = orbitRegimeColors[obj.orbitRegime] || Color.WHITE;
+                viewer.entities.add(
+                    new Entity({
+                        position: Cartesian3.fromDegrees(obj.longitude, obj.latitude, obj.altitude),
+                        point: {
+                            pixelSize: 5,
+                            color: color,
+                        },
+                        name: obj.name,
+                        description: `
+                         <div style="background-color: black; color: white; padding: 10px; border-radius: 5px;">
+                            <h3>${obj.name}</h3>
+                            <b>Type:</b> ${obj.type}<br>
+                            <b>Orbit:</b> ${obj.orbitRegime}<br>
+                            <b>Altitude:</b> ${obj.altitude.toLocaleString()} km<br>
+                            <b>Longitude:</b> ${obj.longitude.toFixed(2)}<br>
+                            <b>Latitude:</b> ${obj.latitude.toFixed(2)}<br>
+                        </div>
+                        `,
+                    })
+                );
+            }
         });
 
         return () => {
             viewer.entities.removeAll();
         };
-    }, [debris]);
+    }, [debris, filter]);
 
-    return <div id="cesiumContainer" style={{ width: '100%', height: '100vh' }} />;
+  
+    const handleFilterChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+        setFilter({ ...filter, [event.target.name]: event.target.checked });
+    };
+
+ 
+    const resetFilters = () => {
+        setFilter(initialFilters);
+    };
+
+    return (
+        <div style={{ position: 'relative', width: '100%', height: '100vh' }}>
+            <div style={{
+                position: 'absolute',
+                top: '150px',
+                left: '80px',
+                background: 'rgba(0, 0, 0, 0.8)',
+                padding: '10px',
+                borderRadius: '5px',
+                color: 'white',
+                zIndex: 1000,
+                maxWidth: '200px'
+            }}>
+   
+             
+                <button 
+                    onClick={resetFilters} 
+                    style={{
+                        width: '100%',
+                        padding: '5px',
+                        marginBottom: '8px',
+                        background: 'white',
+                        color: 'black',
+                        border: 'none',
+                        borderRadius: '5px',
+                        cursor: 'pointer',
+                        fontWeight: 'bold'
+                    }}>
+                    Reset
+                </button>
+
+                {Object.keys(filter).map((orbit) => {
+                    const colorStyle = {
+                        display: 'inline-block',
+                        width: '12px',
+                        height: '12px',
+                        backgroundColor: orbit === "LEO" ? "red" :
+                                        orbit === "MEO" ? "green" :
+                                        orbit === "HEO" ? "orange" :
+                                        orbit === "GEO" ? "blue" :
+                                        orbit === "EGO" ? "purple" :
+                                        orbit === "GTO" ? "yellow" :
+                                        orbit === "NSO" ? "cyan" :
+                                        orbit === "LMO" ? "magenta" :
+                                        orbit === "MGO" ? "brown" :
+                                        "grey",
+                        marginRight: '5px',
+                        borderRadius: '2px'
+                    };
+
+                    return (
+                        <label key={orbit} style={{ display: 'flex', alignItems: 'center', fontSize: '20px', marginBottom: '5px' }}>
+                            <div style={colorStyle}></div>
+                            <input
+                                type="checkbox"
+                                name={orbit}
+                                checked={filter[orbit]}
+                                onChange={handleFilterChange}
+                                style={{ marginRight: '5px' }}
+                            />
+                            {orbit}
+                        </label>
+                    );
+                })}
+            </div>
+
+            {/* Cesium Globe */}
+            <div id="cesiumContainer" style={{ width: '100%', height: '100vh' }} />
+        </div>
+    );
 };
 
 export default CesiumGlobe;
