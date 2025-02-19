@@ -1,0 +1,9 @@
+﻿@AstraGrpah_HostAddress = https://localhost:7122
+
+GET {{AstraGrpah_HostAddress}}/api/spaceobjects
+
+###
+
+GET {{AstraGrpah_HostAddress}}/api/spaceobjects/countries
+
+###
